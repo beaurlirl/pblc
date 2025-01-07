@@ -10,7 +10,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta name="language" content="english" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta httpEquiv="content-type" content="text/html" />
-        <title>spacesvr</title>
+        <title>publicproperty</title>
         {/* SEO tags */}
         <meta name="author" content="www.muse.place" />
         <meta

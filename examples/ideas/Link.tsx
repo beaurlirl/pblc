@@ -13,7 +13,10 @@ export default function Link(props: LinkProps) {
     <group name={`link-${href}`} {...rest}>
       <FacePlayer>
         <Anchor href={href}>
-          <Button maxWidth={0.4}>{children}</Button>
+          {/* Adding a color prop to change the button color */}
+          <Button maxWidth={0.4} color="black">
+            {children}
+          </Button>
         </Anchor>
       </FacePlayer>
     </group>
