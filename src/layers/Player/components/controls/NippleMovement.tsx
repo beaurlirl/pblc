@@ -1,8 +1,11 @@
 import { useRef, useEffect, MutableRefObject } from "react";
 import { Global, css } from "@emotion/react";
 import { Vector3 } from "three";
-import nipplejs, { JoystickManager } from "nipplejs";
+import dynamic from "next/dynamic"; // Import next/dynamic for dynamic imports
 import { useEnvironment } from "../../../Environment";
+
+// Dynamically import nipplejs only on the client-side
+const nipplejs = dynamic(() => import("nipplejs"), { ssr: false });
 
 type NippleMovementProps = {
   direction: MutableRefObject<Vector3>;
@@ -23,12 +26,13 @@ type NippleMovementProps = {
 const NippleMovement = (props: NippleMovementProps) => {
   const { direction } = props;
 
-  const nipple = useRef<JoystickManager>();
-  const nippleContainer = useRef<HTMLElement>();
+  const nipple = useRef(null); // Initialize nipplejs with null ref
+  const nippleContainer = useRef<HTMLElement>(null); // For the nipple container
   const { containerRef } = useEnvironment();
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (typeof window !== "undefined" && containerRef.current) {
+      // Create a div element to hold the nipplejs controller
       nippleContainer.current = document.createElement("div");
       nippleContainer.current.style.position = "fixed";
       nippleContainer.current.style.left = "0";
@@ -38,11 +42,11 @@ const NippleMovement = (props: NippleMovementProps) => {
       nippleContainer.current.style.height = "25%";
       nippleContainer.current.style.height = "160px";
       nippleContainer.current.style.zIndex = "5";
-      // add class identifier to nippleContainer to identify touchEvents
       nippleContainer.current.classList.add("nipple-container");
       containerRef.current.appendChild(nippleContainer.current);
 
-      nipple.current = nipplejs.create({
+      // Initialize nipplejs
+      const nippleInstance = nipplejs.create({
         zone: nippleContainer.current,
         mode: "static",
         position: { left: "50%", top: "50%" },
@@ -51,14 +55,13 @@ const NippleMovement = (props: NippleMovementProps) => {
         restOpacity: 0.75,
       });
 
-      nipple.current.on("move", (evt, data) => {
-        // i kinda pulled 60 out of my ass tbh
+      nippleInstance.on("move", (evt, data) => {
         const x = (data.distance / 60) * Math.cos(data.angle.radian);
         const z = (-data.distance / 60) * Math.sin(data.angle.radian);
         direction.current.set(x, 0, z);
       });
 
-      nipple.current.on("end", () => {
+      nippleInstance.on("end", () => {
         direction.current.set(0, 0, 0);
       });
 
@@ -66,11 +69,13 @@ const NippleMovement = (props: NippleMovementProps) => {
         ev.preventDefault();
       });
 
+      nipple.current = nippleInstance; // Store the nipplejs instance in ref
+
       return () => {
-        if (nipple.current) nipple.current.destroy();
+        if (nipple.current) nipple.current.destroy(); // Cleanup on unmount
       };
     }
-  }, []);
+  }, [containerRef]); // Dependency array to run the effect after mounting
 
   const nippleStyles = css`
     .nipple-container > * > .front,
